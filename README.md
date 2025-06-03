@@ -1,8 +1,6 @@
 
-# Desenvolvimento de Aplicações Distribuídas
-Repositório para publicação das resoluções dos exercícios de Laboratório das disciplinas de programação da PUC Minas!
-
-## Projeto: Segmentação de Doenças em Folhas de Plantas com Redes Neurais Convolucionais
+# Segmentação de doenças em plantas usando U-Net
+A rede neural convolucional U-Net tem como objetivo a segmentação precisa de imagens de alta resolução, sendo bastante utilizada na área médica para identificar tumores, células e órgãos. Devido à sua precisão, essa rede também se mostra eficaz para identificar áreas afetadas por doenças em folhas de plantas, o que permite agir mais cedo para evitar prejuízos na produção agrícola.  Utilizando a base de dados PlantVillage, o modelo foi treinado e avaliado com foco em precisão pixel a pixel. A versão modificada da rede apresentou desempenho superior em métricas como IoU e BCE Loss, demonstrando como ferramentas computacionais servem de suporte à agricultura de precisão.
 
 Este repositório contém a implementação completa de três arquiteturas de redes neurais aplicadas à segmentação de imagens da base PlantVillage:
 
@@ -12,7 +10,11 @@ Este repositório contém a implementação completa de três arquiteturas de re
 
 ## Alunos integrantes da equipe
 
-* Nome completo do aluno
+* Gabrielle Lira Dantas Wanderley
+* Henrique Santana Diniz
+* Joaquim de Moura Thomaz Neto
+* Maria Eduarda Chrispim Santana
+* Saulo Pereira Vasconcelos
 
 ## Professor responsável
 
