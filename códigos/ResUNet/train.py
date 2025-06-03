@@ -40,8 +40,8 @@ class LeafDataset(Dataset):
             image = self.transform(image)
             mask = self.transform(mask)
 
-        mask = (mask > 0).float()  # binariza
-        return image, mask
+        mask = (mask > 0).float()
+        return image, mask, img_name  # inclui nome da imagem
 
 # TRANSFORMAÇÕES
 transform = transforms.Compose([
@@ -58,30 +58,43 @@ model = ResUNet().to(DEVICE)
 criterion = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
+# FUNÇÃO IoU
+def iou(pred, target, threshold=0.5):
+    pred_bin = (pred > threshold).float()
+    intersection = (pred_bin * target).sum(dim=(1, 2, 3))
+    union = pred_bin.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3)) - intersection
+    return (intersection / union).mean().item()
+
 # TREINAMENTO
 for epoch in range(EPOCHS):
     model.train()
     total_loss = 0
+    total_iou = 0
 
-    for batch_idx, (imgs, masks) in enumerate(loader):
+    for imgs, masks, _ in loader:
         imgs, masks = imgs.to(DEVICE), masks.to(DEVICE)
 
         preds = model(imgs)
         loss = criterion(preds, masks)
         total_loss += loss.item()
+        total_iou += iou(preds, masks)
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-    print(f"Época {epoch+1}/{EPOCHS} - Loss: {total_loss/len(loader):.4f}")
+    avg_loss = total_loss / len(loader)
+    avg_iou = total_iou / len(loader)
+    print(f"Época {epoch+1}/{EPOCHS} - Loss: {avg_loss:.4f} - IoU médio: {avg_iou:.4f}")
 
     # Salva algumas predições visualmente
     model.eval()
     with torch.no_grad():
         for i in range(3):
-            img, mask = dataset[i]
+            img, mask, img_name = dataset[i]
             img = img.unsqueeze(0).to(DEVICE)
             pred = model(img).squeeze().cpu()
-            save_image(pred, f"{SAVE_DIR}/pred_{epoch+1}_{i}.png")
-            save_image(mask, f"{SAVE_DIR}/real_{epoch+1}_{i}.png")
+
+            suffix = os.path.splitext(img_name)[0][-4:]  # últimos 4 caracteres
+            save_image(pred, f"{SAVE_DIR}/pred_{epoch+1}_{suffix}.png")
+            save_image(mask, f"{SAVE_DIR}/real_{epoch+1}_{suffix}.png")
