@@ -2,17 +2,39 @@
 # Desenvolvimento de Aplicações Distribuídas
 Repositório para publicação das resoluções dos exercícios de Laboratório das disciplinas de programação da PUC Minas!
 
+## Projeto: Segmentação de Doenças em Folhas de Plantas com Redes Neurais Convolucionais
+
+Este repositório contém a implementação completa de três arquiteturas de redes neurais aplicadas à segmentação de imagens da base PlantVillage:
+
+- Autoencoder Convolucional
+- U-Net
+- ResUNet
+
 ## Alunos integrantes da equipe
 
 * Nome completo do aluno
 
 ## Professor responsável
 
-* Nome completo do professor
+- Leonardo Vilela Cardoso
 
 ## Instruções de Uso
 
-* Instruções de como o trabalho pode ser replicado/reproduzido.
+### Requisitos
+
+- Python 3.8 ou superior
+- [Anaconda (recomendado)](https://www.anaconda.com/)
+- PyTorch, torchvision, PIL, matplotlib
+
+### Instalação de Dependências
+
+Crie e ative um ambiente virtual (recomendado com `conda`):
+
+```bash
+conda create -n segmentacao_folhas python=3.10
+conda activate segmentacao_folhas
+pip install -r requirements.txt
+```
 
 ### Estrutura do Projeto
 
