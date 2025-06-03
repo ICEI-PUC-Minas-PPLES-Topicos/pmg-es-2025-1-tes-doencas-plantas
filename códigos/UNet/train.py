@@ -41,7 +41,7 @@ class LeafDataset(Dataset):
             mask = self.transform(mask)
 
         mask = (mask > 0).float()
-        return image, mask, img_name  # agora retorna também o nome
+        return image, mask, img_name
 
 # TRANSFORMAÇÕES
 transform = transforms.Compose([
@@ -58,43 +58,46 @@ model = UNet().to(DEVICE)
 criterion = nn.BCELoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=LR)
 
-# FUNÇÃO IoU
-def iou(pred, target, threshold=0.5):
-    pred_bin = (pred > threshold).float()
-    intersection = (pred_bin * target).sum(dim=(1, 2, 3))
-    union = pred_bin.sum(dim=(1, 2, 3)) + target.sum(dim=(1, 2, 3)) - intersection
-    return (intersection / union).mean().item()
+# Função para calcular IoU com proteção contra divisão por zero
+def iou_metric(preds, masks):
+    preds = (preds > 0.5).float()
+    masks = (masks > 0.5).float()
+    intersection = (preds * masks).sum(dim=(1, 2, 3))
+    union = ((preds + masks) > 0).float().sum(dim=(1, 2, 3))
+    iou = torch.where(union == 0, torch.tensor(1.0, device=preds.device), intersection / union)
+    return iou.mean().item()
 
 # TREINAMENTO
 for epoch in range(EPOCHS):
     model.train()
     total_loss = 0
     total_iou = 0
+    batches_validos = 0
 
-    for imgs, masks, _ in loader:
+    for batch_idx, (imgs, masks, _) in enumerate(loader):
         imgs, masks = imgs.to(DEVICE), masks.to(DEVICE)
-
         preds = model(imgs)
         loss = criterion(preds, masks)
         total_loss += loss.item()
-        total_iou += iou(preds, masks)
+
+        iou = iou_metric(preds, masks)
+        if not torch.isnan(torch.tensor(iou)):
+            total_iou += iou
+            batches_validos += 1
 
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
-    avg_loss = total_loss / len(loader)
-    avg_iou = total_iou / len(loader)
-    print(f"Época {epoch+1}/{EPOCHS} - Loss: {avg_loss:.4f} - IoU médio: {avg_iou:.4f}")
+    iou_medio = total_iou / batches_validos if batches_validos > 0 else float("nan")
+    print(f"Época {epoch+1}/{EPOCHS} - Loss: {total_loss/len(loader):.4f} - IoU médio: {iou_medio:.4f}")
 
-    # Salva predições visualmente com sufixo do nome original da imagem
+    # Salva algumas predições visualmente
     model.eval()
     with torch.no_grad():
         for i in range(3):
-            img, mask, img_name = dataset[i]
-            img = img.unsqueeze(0).to(DEVICE)
-            pred = model(img).squeeze().cpu()
-
-            suffix = os.path.splitext(img_name)[0][-4:]  # últimos 4 caracteres do nome do arquivo (sem extensão)
-            save_image(pred, f"{SAVE_DIR}/pred_{epoch+1}_{suffix}.png")
-            save_image(mask, f"{SAVE_DIR}/real_{epoch+1}_{suffix}.png")
+            img, mask, nome = dataset[i]
+            img_tensor = img.unsqueeze(0).to(DEVICE)
+            pred = model(img_tensor).squeeze().cpu()
+            save_image(pred, f"{SAVE_DIR}/pred_{epoch+1}_{nome}")
+            save_image(mask, f"{SAVE_DIR}/real_{epoch+1}_{nome}")
